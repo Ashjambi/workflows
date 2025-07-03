@@ -9,6 +9,9 @@ import * as pdfjsLib from 'pdfjs-dist/build/pdf';
 import 'pdfjs-dist/build/pdf.worker.entry';
 import { createRoot } from 'react-dom/client';
 
+console.log("App loaded!");
+alert("App loaded!");
+
 export default function App() {
   const [pdfText, setPdfText] = useState('');
   const [file, setFile] = useState<File | null>(null);
