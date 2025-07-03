@@ -6,6 +6,7 @@
 import { render } from 'preact';
 import { signal } from '@preact/signals';
 import { generateProcessMap } from './aiProviders';
+import { html } from 'htm/preact';
 
 interface ProcessStep {
   step: number;
