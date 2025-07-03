@@ -72,26 +72,6 @@ async function callDeepSeek(prompt: string): Promise<ProcessStep[]> {
   return parsedData.sort((a, b) => a.step - b.step);
 }
 
-// Cohere (كوين)
-async function callCohere(prompt: string): Promise<ProcessStep[]> {
-  // تحتاج لإضافة مكتبة cohere: npm install cohere-ai
-  const { CohereClient } = await import('cohere-ai');
-  const cohere = new CohereClient({ token: import.meta.env.VITE_COHERE_API_KEY });
-  const response = await cohere.chat({
-    model: 'command',
-    message: prompt,
-    response_format: 'json',
-  });
-  let jsonStr = response.text?.trim() || '';
-  const fenceRegex = /^```(\w*)?\s*\n?(.*?)\n?\s*```$/s;
-  const match = jsonStr.match(fenceRegex);
-  if (match && match[2]) {
-    jsonStr = match[2].trim();
-  }
-  const parsedData = JSON.parse(jsonStr) as ProcessStep[];
-  return parsedData.sort((a, b) => a.step - b.step);
-}
-
 // Claude
 async function callClaude(prompt: string): Promise<ProcessStep[]> {
   // تحتاج لإضافة مكتبة anthropic: npm install anthropic
@@ -165,9 +145,6 @@ export async function generateProcessMap(prompt: string, providers: AIProvider[]
       }
       if (provider === 'deepseek') {
         return await callDeepSeek(prompt);
-      }
-      if (provider === 'cohere') {
-        return await callCohere(prompt);
       }
       if (provider === 'claude') {
         return await callClaude(prompt);
