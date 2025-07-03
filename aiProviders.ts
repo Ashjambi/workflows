@@ -72,26 +72,6 @@ async function callDeepSeek(prompt: string): Promise<ProcessStep[]> {
   return parsedData.sort((a, b) => a.step - b.step);
 }
 
-// Mistral
-async function callMistral(prompt: string): Promise<ProcessStep[]> {
-  // تحتاج لإضافة مكتبة mistralai: npm install mistralai
-  const { MistralClient } = await import('mistralai');
-  const mistral = new MistralClient(import.meta.env.VITE_MISTRAL_API_KEY);
-  const response = await mistral.chat({
-    model: 'mistral-large-latest',
-    messages: [{ role: 'user', content: prompt }],
-    response_format: 'json',
-  });
-  let jsonStr = response.choices[0]?.message?.content?.trim() || '';
-  const fenceRegex = /^```(\w*)?\s*\n?(.*?)\n?\s*```$/s;
-  const match = jsonStr.match(fenceRegex);
-  if (match && match[2]) {
-    jsonStr = match[2].trim();
-  }
-  const parsedData = JSON.parse(jsonStr) as ProcessStep[];
-  return parsedData.sort((a, b) => a.step - b.step);
-}
-
 // OpenRouter
 async function callOpenRouter(prompt: string): Promise<ProcessStep[]> {
   // تحتاج لإضافة مكتبة openrouter: npm install openrouter
@@ -127,7 +107,22 @@ export async function generateProcessMap(prompt: string, providers: AIProvider[]
         return await callDeepSeek(prompt);
       }
       if (provider === 'mistral') {
-        return await callMistral(prompt);
+        // تحتاج لإضافة مكتبة mistralai: npm install mistralai
+        // const { MistralClient } = await import('mistralai');
+        // const mistral = new MistralClient(import.meta.env.VITE_MISTRAL_API_KEY);
+        // const response = await mistral.chat({
+        //   model: 'mistral-large-latest',
+        //   messages: [{ role: 'user', content: prompt }],
+        //   response_format: 'json',
+        // });
+        // let jsonStr = response.choices[0]?.message?.content?.trim() || '';
+        // const fenceRegex = /^```(\w*)?\s*\n?(.*?)\n?\s*```$/s;
+        // const match = jsonStr.match(fenceRegex);
+        // if (match && match[2]) {
+        //   jsonStr = match[2].trim();
+        // }
+        // const parsedData = JSON.parse(jsonStr) as ProcessStep[];
+        // return parsedData.sort((a, b) => a.step - b.step);
       }
       if (provider === 'openrouter') {
         return await callOpenRouter(prompt);
