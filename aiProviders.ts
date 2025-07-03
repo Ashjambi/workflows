@@ -1,4 +1,4 @@
-export type AIProvider = 'gemini' | 'openai' | 'deepseek' | 'cohere' | 'claude' | 'mistral' | 'openrouter';
+export type AIProvider = 'gemini' | 'openai' | 'deepseek' | 'cohere' | 'claude';
 
 interface ProcessStep {
   step: number;
@@ -101,7 +101,7 @@ async function callOpenRouter(prompt: string): Promise<ProcessStep[]> {
 }
 
 // الدالة الموحدة مع fallback
-export async function generateProcessMap(prompt: string, providers: AIProvider[] = ['gemini', 'openai', 'deepseek', 'cohere', 'claude', 'mistral', 'openrouter']): Promise<ProcessStep[]> {
+export async function generateProcessMap(prompt: string, providers: AIProvider[] = ['gemini', 'openai', 'deepseek', 'cohere', 'claude']): Promise<ProcessStep[]> {
   let lastError = null;
   for (const provider of providers) {
     try {
