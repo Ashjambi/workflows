@@ -72,26 +72,6 @@ async function callDeepSeek(prompt: string): Promise<ProcessStep[]> {
   return parsedData.sort((a, b) => a.step - b.step);
 }
 
-// Claude
-async function callClaude(prompt: string): Promise<ProcessStep[]> {
-  // تحتاج لإضافة مكتبة anthropic: npm install anthropic
-  const { Anthropic } = await import('anthropic');
-  const anthropic = new Anthropic({ apiKey: import.meta.env.VITE_CLAUDE_API_KEY });
-  const response = await anthropic.messages.create({
-    model: 'claude-3-opus-20240229',
-    max_tokens: 2048,
-    messages: [{ role: 'user', content: prompt }],
-  });
-  let jsonStr = response.content?.trim() || '';
-  const fenceRegex = /^```(\w*)?\s*\n?(.*?)\n?\s*```$/s;
-  const match = jsonStr.match(fenceRegex);
-  if (match && match[2]) {
-    jsonStr = match[2].trim();
-  }
-  const parsedData = JSON.parse(jsonStr) as ProcessStep[];
-  return parsedData.sort((a, b) => a.step - b.step);
-}
-
 // Mistral
 async function callMistral(prompt: string): Promise<ProcessStep[]> {
   // تحتاج لإضافة مكتبة mistralai: npm install mistralai
@@ -145,9 +125,6 @@ export async function generateProcessMap(prompt: string, providers: AIProvider[]
       }
       if (provider === 'deepseek') {
         return await callDeepSeek(prompt);
-      }
-      if (provider === 'claude') {
-        return await callClaude(prompt);
       }
       if (provider === 'mistral') {
         return await callMistral(prompt);
