@@ -75,14 +75,22 @@ async function callDeepSeek(prompt: string): Promise<ProcessStep[]> {
 // OpenRouter
 async function callOpenRouter(prompt: string): Promise<ProcessStep[]> {
   // تحتاج لإضافة مكتبة openrouter: npm install openrouter
-  const { OpenRouter } = await import('openrouter');
-  const openrouter = new OpenRouter({ apiKey: import.meta.env.VITE_OPENROUTER_API_KEY });
-  const response = await openrouter.chat.completions.create({
-    model: 'openrouter-model',
-    messages: [{ role: 'user', content: prompt }],
-    response_format: { type: 'json_object' },
+  // const { OpenRouter } = await import('openrouter');
+  // const openrouter = new OpenRouter({ apiKey: import.meta.env.VITE_OPENROUTER_API_KEY });
+  const response = await fetch('https://api.openrouter.ai/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${import.meta.env.VITE_OPENROUTER_API_KEY}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      model: 'openrouter-model',
+      messages: [{ role: 'user', content: prompt }],
+      response_format: { type: 'json_object' }
+    }),
   });
-  let jsonStr = response.choices[0]?.message?.content?.trim() || '';
+  const data = await response.json();
+  let jsonStr = data.choices?.[0]?.message?.content?.trim() || '';
   const fenceRegex = /^```(\w*)?\s*\n?(.*?)\n?\s*```$/s;
   const match = jsonStr.match(fenceRegex);
   if (match && match[2]) {
