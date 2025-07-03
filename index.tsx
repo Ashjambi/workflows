@@ -7,6 +7,7 @@ import React, { useState } from 'react';
 import { generateProcessMap } from './aiProviders';
 import * as pdfjsLib from 'pdfjs-dist/build/pdf';
 import 'pdfjs-dist/build/pdf.worker.entry';
+import { createRoot } from 'react-dom/client';
 
 export default function App() {
   const [pdfText, setPdfText] = useState('');
@@ -79,4 +80,10 @@ export default function App() {
       </div>}
     </div>
   );
+}
+
+const container = document.getElementById('app');
+if (container) {
+  const root = createRoot(container);
+  root.render(<App />);
 }
