@@ -15,7 +15,6 @@
     "noEmit": true,
     "allowJs": true,
     "jsx": "react-jsx",
-    "jsxImportSource": "preact",
 
     /* Linting */
     "strict": true,
