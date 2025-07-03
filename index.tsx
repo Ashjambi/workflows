@@ -3,85 +3,80 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { render } from 'preact';
-import { signal } from '@preact/signals';
+import React, { useState } from 'react';
 import { generateProcessMap } from './aiProviders';
-import { html } from 'htm/preact';
+import * as pdfjsLib from 'pdfjs-dist/build/pdf';
+import 'pdfjs-dist/build/pdf.worker.entry';
 
-interface ProcessStep {
-  step: number;
-  title: string;
-  description: string;
-}
+export default function App() {
+  const [pdfText, setPdfText] = useState('');
+  const [file, setFile] = useState<File | null>(null);
+  const [result, setResult] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-const userInput = signal('');
-const processSteps = signal<ProcessStep[] | null>(null);
-const isLoading = signal(false);
-const error = signal<string | null>(null);
+  // دالة استخراج النص من PDF
+  const extractTextFromPDF = async (file: File) => {
+    const arrayBuffer = await file.arrayBuffer();
+    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+    let text = '';
+    for (let i = 1; i <= pdf.numPages; i++) {
+      const page = await pdf.getPage(i);
+      const content = await page.getTextContent();
+      text += content.items.map((item: any) => item.str).join(' ') + '\n';
+    }
+    return text;
+  };
 
-const App = () => {
-  const handleGenerate = async () => {
-    if (!userInput.value.trim() || isLoading.value) return;
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    setError(null);
+    setResult(null);
+    if (e.target.files && e.target.files[0]) {
+      setFile(e.target.files[0]);
+      try {
+        setLoading(true);
+        const text = await extractTextFromPDF(e.target.files[0]);
+        setPdfText(text);
+      } catch (err) {
+        setError('تعذر قراءة ملف PDF');
+      } finally {
+        setLoading(false);
+      }
+    }
+  };
 
-    isLoading.value = true;
-    error.value = null;
-    processSteps.value = null;
-
-    try {
-      const prompt = `
-        بناءً على الوصف التالي، قم بإنشاء خريطة عملية خطوة بخطوة. 
-        أرجع الإخراج كـ JSON array حيث يحتوي كل كائن على "step" (رقم)، و "title" (عنوان)، و "description" (وصف).
-        تأكد من أن العناوين والأوصاف قصيرة وواضحة ومباشرة.
-        الوصف: "${userInput.value}"
-      `;
-
-      const steps = await generateProcessMap(prompt, ['gemini', 'openai']);
-      processSteps.value = steps;
-
-    } catch (e) {
-      console.error(e);
-      error.value = 'حدث خطأ أثناء إنشاء خريطة العمليات. يرجى المحاولة مرة أخرى.';
-    } finally {
-      isLoading.value = false;
+  const handleAnalyze = async () => {
+    setError(null);
+    setResult(null);
+    if (pdfText) {
+      try {
+        setLoading(true);
+        const res = await generateProcessMap(pdfText);
+        setResult(res);
+      } catch (err: any) {
+        setError('حدث خطأ أثناء تحليل الملف: ' + (err?.message || ''));
+      } finally {
+        setLoading(false);
+      }
     }
   };
 
   return (
-    <>
-      <header>
-        <h1>مولّد خرائط العمليات بالذكاء الاصطناعي</h1>
-        <p>صف العملية التي تريد تخطيطها، وسيقوم الذكاء الاصطناعي بتحويلها إلى خريطة عمليات مرئية.</p>
-      </header>
-      
-      <div class="input-section">
-        <textarea
-          value={userInput.value}
-          onInput={(e) => (userInput.value = (e.currentTarget as HTMLTextAreaElement).value)}
-          placeholder="مثال: عملية إعداد كوب من القهوة صباحًا"
-          disabled={isLoading.value}
-          aria-label="أدخل وصف العملية"
-        ></textarea>
-        <button onClick={handleGenerate} disabled={isLoading.value || !userInput.value.trim()}>
-          {isLoading.value ? 'جاري الإنشاء...' : 'إنشاء الخريطة'}
-        </button>
-      </div>
-
-      <div class="result-section">
-        {isLoading.value && <div class="loader" aria-label="جاري التحميل"></div>}
-        {error.value && <div class="error">{error.value}</div>}
-        {processSteps.value && (
-          <div class="process-map">
-            {processSteps.value.map((step) => (
-              <div key={step.step} class="step">
-                <div class="step-title">{step.title}</div>
-                <div class="step-description">{step.description}</div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-    </>
+    <div style={{ maxWidth: 600, margin: '2rem auto', padding: 24, background: '#fff', borderRadius: 8, boxShadow: '0 2px 8px #0001' }}>
+      <h2>مولّد خرائط العمليات بالذكاء الاصطناعي</h2>
+      <input type="file" accept="application/pdf" onChange={handleFileChange} />
+      <button onClick={handleAnalyze} disabled={!pdfText || loading} style={{ marginRight: 8 }}>
+        {loading ? 'جاري التحليل...' : 'حلل الملف'}
+      </button>
+      {error && <div style={{ color: 'red', marginTop: 8 }}>{error}</div>}
+      {pdfText && <div style={{ margin: '1rem 0', fontSize: 12, color: '#555', maxHeight: 120, overflow: 'auto', background: '#f7f7f7', padding: 8, borderRadius: 4 }}>
+        <b>مقتطف من نص الملف:</b>
+        <div dir="ltr">{pdfText.slice(0, 500)}{pdfText.length > 500 ? ' ...' : ''}</div>
+      </div>}
+      {result && <div style={{ marginTop: 16 }}>
+        <h4>نتيجة التحليل:</h4>
+        <pre style={{ background: '#f0f0f0', padding: 12, borderRadius: 4, maxHeight: 300, overflow: 'auto' }}>{JSON.stringify(result, null, 2)}</pre>
+      </div>}
+    </div>
   );
-};
-
-render(<App />, document.getElementById('app')!);
+}
