@@ -7,8 +7,6 @@ interface ImportMetaEnv {
   readonly VITE_COHERE_API_KEY: string;
   // أضف المزيد حسب الحاجة
   readonly VITE_CLAUDE_API_KEY?: string;
-  readonly VITE_MISTRAL_API_KEY?: string;
-  readonly VITE_OPENROUTER_API_KEY?: string;
 }
 
 interface ImportMeta {
